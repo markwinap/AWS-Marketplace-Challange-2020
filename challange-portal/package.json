@@ -12,11 +12,13 @@
     "@testing-library/user-event": "^7.1.2",
     "aws-amplify-react": "^4.1.7",
     "konva": "^4.2.2",
+    "material-ui-color-picker": "^3.5.0",
     "react": "^16.13.1",
     "react-color": "^2.18.0",
     "react-dom": "^16.13.1",
     "react-konva": "^16.13.0-0",
-    "react-scripts": "3.4.1"
+    "react-scripts": "3.4.1",
+    "use-image": "^1.0.5"
   },
   "scripts": {
     "start": "react-scripts start",
