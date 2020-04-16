@@ -1,23 +1,11 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import {
-  Drawer,
-  Toolbar,
-  List,
-  Divider,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-} from '@material-ui/core';
-import { MoveToInbox, Mail } from '@material-ui/icons';
 
 import Konva from 'konva';
 import { Stage, Layer, Rect, Text, Circle, Line, Image } from 'react-konva';
 import useImage from 'use-image';
 import { store } from '../../store.js';
 import data from './data_test.js';
-
-const dist_threshold = 60;
 
 const useStyles = makeStyles((theme) => ({
   drawerContainer: {
@@ -57,7 +45,7 @@ export default function DrawerLeft() {
     //cleanData(e,score_threshold, dist_threshold)
 
     const d = cleanData(
-      data,
+      globalState?.state?.data,
       globalState?.state?.scoreThreshold,
       globalState?.state?.distThreshold
     );
@@ -66,8 +54,8 @@ export default function DrawerLeft() {
     setDistances(d.temp);
     return () => {};
   }, [globalState]);
-  const GetImg = () => {
-    const [image] = useImage('https://cloudlove.s3.amazonaws.com/people.jpg');
+  const GetImg = (e) => {
+    const [image] = useImage(e.url);
     if (image) {
       //setImageWidth(image?.width);
       //setImagHeight(image?.height);
@@ -75,39 +63,12 @@ export default function DrawerLeft() {
     return <Image image={image} />;
   };
   //resizeObserver.observe(document.getElementById("myDivTag"));
-  /*
-
-x: 0
-y: 0
-width: 1536
-height: 754
-top: 0
-right: 1536
-bottom: 754
-left: 0
-  */
-  /*
-right: 650
-bottom: 237
-top: 134
-score: 0.8818903565406799
-id: "person"
-left: 601
-center: {x: 625.5, y: 185.5}
-x: 601
-y: 134
-w: 49
-h: 103
-
-  */
 
   return (
     <div id="canvas-image" className={classes.canvas}>
       <Stage width={width} height={height}>
         <Layer>
-          <GetImg />
-        </Layer>
-        <Layer>
+          <GetImg url={globalState?.state?.imageUrl} />
           <Text
             text={`${distances.length} Infractions`}
             x={10}

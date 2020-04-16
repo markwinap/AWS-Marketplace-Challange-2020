@@ -1,25 +1,23 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import {
   Drawer,
   Toolbar,
-  List,
-  Divider,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Input,
   Typography,
   Slider,
-  Select,
   MenuItem,
   TextField,
   FormControlLabel,
   Switch,
+  LinearProgress,
 } from '@material-ui/core';
-import { MoveToInbox, Mail } from '@material-ui/icons';
 import ColorPicker from 'material-ui-color-picker';
 import { store } from '../../store.js';
+import { Auth, Storage } from 'aws-amplify';
+
+import * as rax from 'retry-axios';
+import axios from 'axios';
+const interceptorId = rax.attach();
 
 const drawerWidth = 260;
 
@@ -72,11 +70,22 @@ export default function DrawerLeft() {
   const [people, setPeople] = useState(true);
   const [line, setLine] = useState(true);
   const [droneHeight, setDroneHeight] = useState(10);
+  const [upload, setUpload] = useState(0);
+  const [uploading, setUploading] = useState(false);
+  const [uploadingMsg, setUploadingMsg] = useState('');
+  const [filename, setFilename] = useState('');
+
+  useEffect(() => {
+    Auth.currentSession()
+      .then((data) => console.log(data))
+      .catch((err) => console.log(err));
+
+    return () => {};
+  }, []);
 
   const classes = useStyles();
   const globalState = useContext(store);
   const { dispatch } = globalState;
-  console.log(globalState); // this will return { color: red }
   return (
     <Drawer
       className={classes.drawer}
@@ -88,6 +97,99 @@ export default function DrawerLeft() {
       <Toolbar />
       <div className={classes.drawerContainer}>
         <div className={classes.containerMain}>
+          <Typography variant="h6" gutterBottom>
+            Image
+          </Typography>
+          <TextField
+            id="standard-basic"
+            type="file"
+            accept="image/jpg"
+            name="Image"
+            fullWidth
+            onChange={async (e) => {
+              const _file = e.target.files[0];
+              console.log(_file);
+              if (_file.size < 2000001) {
+                dispatch({
+                  type: 'iamge-url',
+                  value: URL.createObjectURL(_file),
+                });
+                dispatch({
+                  type: 'ml-data',
+                  value: [],
+                });
+                setUploading(true);
+                setFilename(_file.name);
+                await Storage.put(_file.name, _file, {
+                  progressCallback(progress) {
+                    console.log(
+                      `Uploaded: ${progress.loaded}/${progress.total}`
+                    );
+                    setUploadingMsg(
+                      `Uploaded: ${progress.loaded}/${progress.total}`
+                    );
+                    setUpload((progress.loaded / progress.total) * 100);
+                  },
+                })
+                  .then((res) => {
+                    setUploading(false);
+                    setUploadingMsg('Upload Completed');
+                    setUpload(0);
+                    console.log(res);
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                    setUpload(0);
+                    setUploadingMsg('Error');
+                  });
+                setUploadingMsg('Geting ML Object');
+                const _temp = await Storage.get(
+                  `${_file.name.split('.')[0]}.json`
+                )
+                  .then((res) => res)
+                  .catch((err) => {
+                    console.log(err);
+                    return false;
+                  });
+                const _json = await axios({
+                  method: 'get',
+                  url: _temp,
+                  raxConfig: {
+                    retry: 10,
+                    retryDelay: 1000,
+                    statusCodesToRetry: [
+                      [100, 199],
+                      [400, 429],
+                      [500, 599],
+                    ],
+                  },
+                })
+                  .then((res) => res.data)
+                  .catch((err) => {
+                    console.log(err);
+                    return [];
+                  });
+                setUploadingMsg('Done');
+                dispatch({
+                  type: 'ml-data',
+                  value: _json,
+                });
+              } else {
+                alert('Filer larger than 2MB');
+              }
+            }}
+          />
+          {uploading ? (
+            <LinearProgress
+              variant="determinate"
+              value={upload}
+              color="secondary"
+            />
+          ) : null}
+          <Typography variant="body2" gutterBottom>
+            {uploadingMsg}
+          </Typography>
+
           {false ? (
             <>
               <Typography variant="h6" gutterBottom>
@@ -178,7 +280,6 @@ export default function DrawerLeft() {
                 placeholder={fillColorPeople}
                 value={fillColorPeople}
                 onChange={(c) => {
-                  console.log(c);
                   dispatch({ type: 'fill-color-people', value: c });
                   setFillColorPeople(c);
                 }}

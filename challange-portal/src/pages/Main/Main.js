@@ -34,7 +34,6 @@ export default function Main() {
       <ToolbarTop />
       <DrawerLeft />
       <main className={classes.content}>
-        <Toolbar />
         <CanvasImage />
       </main>
     </div>

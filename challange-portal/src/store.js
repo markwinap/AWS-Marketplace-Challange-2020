@@ -13,6 +13,8 @@ const initialState = {
   people: true,
   scoreThreshold: 0.16,
   distThreshold: 60,
+  imageUrl: '',
+  data: [],
 };
 const store = createContext(initialState);
 const { Provider } = store;
@@ -20,6 +22,10 @@ const { Provider } = store;
 const StateProvider = ({ children }) => {
   const [state, dispatch] = useReducer((state, action) => {
     switch (action.type) {
+      case 'ml-data':
+        return { ...state, ...{ data: action.value } };
+      case 'iamge-url':
+        return { ...state, ...{ imageUrl: action.value } };
       case 'score-threshold':
         return { ...state, ...{ scoreThreshold: action.value } };
       case 'distance-threshold':
